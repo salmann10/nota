@@ -1,1 +1,350 @@
-    
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Premium Invoice System - Dokter Comp</title>
+        <style>
+            :root {
+                --primary: #0f172a;
+                --accent: #0ea5e9;
+                --text-dark: #1e293b;
+                --text-muted: #64748b;
+                --bg-gray: #f8fafc;
+                --border: #e2e8f0;
+            }
+
+            * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
+
+            body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                background-color: #e5e7eb;
+                margin: 0;
+                padding: 30px;
+                color: var(--text-dark);
+            }
+
+            /* TOOLBAR */
+            .toolbar {
+                max-width: 850px;
+                margin: 0 auto 15px;
+                display: flex;
+                gap: 12px;
+                background: rgba(255, 255, 255, 0.9);
+                backdrop-filter: blur(10px);
+                padding: 12px 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                position: sticky;
+                top: 10px;
+                z-index: 100;
+            }
+
+            .btn {
+                padding: 8px 18px;
+                border-radius: 6px;
+                border: none;
+                font-weight: 600;
+                font-size: 13px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .btn-print { background: var(--primary); color: white; }
+            .btn-add { background: var(--accent); color: white; }
+            .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+
+            /* INVOICE CARD */
+            .invoice-card {
+                max-width: 850px;
+                margin: auto;
+                background: white;
+                padding: 60px;
+                min-height: 1050px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1);
+                position: relative;
+                overflow: hidden; /* Penting untuk watermark */
+            }
+
+            /* WATERMARK */
+            .watermark {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-35deg);
+                font-size: 80pt;
+                font-weight: 900;
+                color: rgba(15, 23, 42, 0.03); /* Sangat tipis */
+                white-space: nowrap;
+                pointer-events: none;
+                user-select: none;
+                z-index: 0;
+                text-transform: uppercase;
+            }
+
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 50px;
+                position: relative;
+                z-index: 1;
+            }
+
+            .brand h1 { 
+                margin: 0; 
+                font-size: 32px; 
+                font-weight: 800; 
+                color: var(--primary);
+                letter-spacing: -0.5px;
+            }
+            
+            .brand span { color: var(--accent); }
+
+            .invoice-meta { text-align: right; }
+            .invoice-meta h2 { 
+                margin: 0; 
+                font-size: 42px; 
+                color: #f1f5f9; 
+                font-weight: 900;
+                line-height: 1;
+            }
+
+            .grid-info {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 40px;
+                margin-bottom: 40px;
+                position: relative;
+                z-index: 1;
+            }
+
+            .label {
+                font-size: 10px;
+                font-weight: 800;
+                color: var(--accent);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 8px;
+                display: block;
+            }
+
+            .content-text { font-size: 14px; line-height: 1.6; }
+
+            /* TABLE */
+            table { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
+            th { 
+                text-align: left; 
+                background: #f1f5f9; 
+                padding: 12px 15px; 
+                font-size: 11px; 
+                color: var(--text-muted);
+                border-top: 2px solid var(--primary);
+            }
+            td { padding: 16px 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+            .editable:focus { background: #f0f9ff; outline: none; border-radius: 4px; }
+
+            .summary-box {
+                margin-top: 40px;
+                display: flex;
+                justify-content: space-between;
+                position: relative;
+                z-index: 1;
+            }
+
+            .notes { width: 50%; font-size: 12px; color: var(--text-muted); }
+            .totals { width: 35%; }
+
+            .total-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .grand-total {
+                background: var(--primary);
+                color: white;
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 15px;
+                font-size: 18px;
+                font-weight: 700;
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .delete-btn { color: #ef4444; border: none; background: none; cursor: pointer; font-size: 16px; opacity: 0; transition: 0.2s; }
+            tr:hover .delete-btn { opacity: 1; }
+
+            footer {
+                margin-top: 80px;
+                text-align: center;
+                border-top: 1px solid var(--border);
+                padding-top: 30px;
+                font-size: 12px;
+                color: var(--text-muted);
+                position: relative;
+                z-index: 1;
+            }
+
+            @media print {
+                body { background: white; padding: 0; }
+                .toolbar, .delete-btn { display: none; }
+                .invoice-card { box-shadow: none; width: 100%; padding: 0; }
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="toolbar">
+            <button class="btn btn-print" onclick="window.print()">🖨️ Simpan ke PDF</button>
+            <button class="btn btn-add" onclick="addRow()">➕ Tambah Layanan</button>
+            <span style="margin-left: auto; font-size: 12px; color: var(--text-muted); align-self: center;">
+                Klik teks apa pun untuk mengedit. Perhitungan otomatis aktif.
+            </span>
+        </div>
+
+        <div class="invoice-card">
+            <div class="watermark">DOKTER COMP</div>
+
+            <header>
+                <div class="brand">
+                    <h1 contenteditable="true">DOKTER<span>COMP</span></h1>
+                    <p contenteditable="true" style="margin:5px 0; color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 2px;">
+                        IT Solutions & Technical Support
+                    </p>
+                </div>
+                <div class="invoice-meta">
+                    <h2>INVOICE</h2>
+                    <p style="margin:5px 0; font-weight: 700;">NO. <span contenteditable="true">2026/INV/001</span></p>
+                </div>
+            </header>
+
+            <div class="grid-info">
+                <div class="col">
+                    <span class="label">Penyedia Jasa</span>
+                    <div class="content-text">
+                        <p><strong>Dokter Comp</strong></p>
+                        <p contenteditable="true">Jl. Sulawesi Kergon Gg. 5A No. 16<br>Pekalongan, Jawa Tengah</p>
+                        <p contenteditable="true">WA: 0878-4315-5717</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <span class="label">Pelanggan</span>
+                    <div class="content-text">
+                        <p contenteditable="true"><strong>[Nama Pelanggan]</strong></p>
+                        <p contenteditable="true">[Alamat Lengkap]</p>
+                        <p contenteditable="true">[No. HP]</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <span class="label">Rincian Dokumen</span>
+                    <div class="content-text">
+                        <p>Tanggal: <span contenteditable="true">21 April 2026</span></p>
+                        <p>Tempo: <span contenteditable="true">-</span></p>
+                        <p>Status: <strong contenteditable="true" style="color: var(--accent);">UNPAID</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <table id="invoiceTable">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Deskripsi Pekerjaan / Part</th>
+                        <th style="text-align: center; width: 10%;">Qty</th>
+                        <th style="text-align: right; width: 15%;">Harga</th>
+                        <th style="text-align: right; width: 20%;">Total</th>
+                        <th style="width: 5%;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td contenteditable="true" class="editable">Maintenance Printer & Penggantian Sparepart</td>
+                        <td contenteditable="true" class="editable qty" style="text-align: center;" oninput="updateCalculations()">1</td>
+                        <td contenteditable="true" class="editable price" style="text-align: right;" oninput="updateCalculations()">150000</td>
+                        <td class="row-total" style="text-align: right; font-weight: 700;">150.000</td>
+                        <td style="text-align: center;"><button class="delete-btn" onclick="removeRow(this)">×</button></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="summary-box">
+                <div class="notes">
+                    <span class="label">Metode Pembayaran & Catatan</span>
+                    <p contenteditable="true" style="margin-bottom: 5px;"><strong>Bank BCA:</strong> Bank BCA: 2381460225 a/n Muchammad Salman Alfarisi</p>
+                    <p contenteditable="true" style="font-style: italic;">* Garansi servis 7 hari berlaku sejak tanggal terbit invoice untuk kerusakan yang sama.</p>
+                </div>
+                <div class="totals">
+                    <div class="total-item">
+                        <span style="color: var(--text-muted); font-size: 13px;">Subtotal</span>
+                        <span id="subtotal" style="font-weight: 600;">Rp 150.000</span>
+                    </div>
+                    <div class="total-item">
+                        <span style="color: var(--text-muted); font-size: 13px;">Potongan Harga</span>
+                        <span contenteditable="true" class="editable" id="discount" style="font-weight: 600;" oninput="updateCalculations()">0</span>
+                    </div>
+                    <div class="grand-total">
+                        <span style="font-size: 12px; align-self: center;">TOTAL TAGIHAN</span>
+                        <span id="grandTotal">Rp 150.000</span>
+                    </div>
+                </div>
+            </div>
+
+            <footer>
+                <p><strong>DOKTER COMP - Fast & Reliable IT Support</strong></p>
+                <p>Jl. Sulawesi Kergon Gg. 5A No. 16, Pekalongan | Telp: 0878-4315-5717</p>
+            </footer>
+        </div>
+
+        <script>
+            function formatCurrency(val) {
+                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+            }
+
+            function updateCalculations() {
+                const rows = document.getElementById("invoiceTable").getElementsByTagName('tbody')[0].rows;
+                let subtotal = 0;
+
+                for (let i = 0; i < rows.length; i++) {
+                    let qty = parseFloat(rows[i].querySelector('.qty').innerText) || 0;
+                    let price = parseFloat(rows[i].querySelector('.price').innerText.replace(/[^\d]/g, '')) || 0;
+                    let total = qty * price;
+                    subtotal += total;
+                    rows[i].querySelector('.row-total').innerText = total.toLocaleString('id-ID');
+                }
+
+                let discount = parseFloat(document.getElementById('discount').innerText.replace(/[^\d]/g, '')) || 0;
+                let final = subtotal - discount;
+
+                document.getElementById('subtotal').innerText = formatCurrency(subtotal);
+                document.getElementById('grandTotal').innerText = formatCurrency(final);
+            }
+
+            function addRow() {
+                const table = document.getElementById("invoiceTable").getElementsByTagName('tbody')[0];
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td contenteditable="true" class="editable">Layanan/Barang baru...</td>
+                    <td contenteditable="true" class="editable qty" style="text-align: center;" oninput="updateCalculations()">1</td>
+                    <td contenteditable="true" class="editable price" style="text-align: right;" oninput="updateCalculations()">0</td>
+                    <td class="row-total" style="text-align: right; font-weight: 700;">0</td>
+                    <td style="text-align: center;"><button class="delete-btn" onclick="removeRow(this)">×</button></td>
+                `;
+                updateCalculations();
+            }
+
+            function removeRow(btn) {
+                btn.closest('tr').remove();
+                updateCalculations();
+            }
+
+            // Jalankan saat pertama kali dibuka
+            updateCalculations();
+        </script>
+    </body>
+    </html>    
